@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    #async-demo__wait {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>DOM and Fetch Demo</h1>
+  <h2>Sync Demo</h2>
+  <div>
+    <a href="https://evilinside.ru/fake-rest-api-dlya-testirovaniya-json">Get HTML</a>
+    <a href="http://jsonplaceholder.typicode.com/todos">Get TODOs</a>
+  </div>
+  <h2>Async Demo</h2>
+  <div>
+    <div id="async-demo__wait">Wait...</div>
+    <button id="async-demo__get-todos-button">Get TODOs Async</button>
+    <h3>Result:</h3>
+    <div id="async-demo__result-block"></div>
+  </div>
+  <script>
+    // получить ссылку на объект узла кноки в DOM
+    const getTodosButton = document.getElementById('async-demo__get-todos-button')
+    // установить обработчик события click на кнопку
+    getTodosButton.addEventListener('click', (ev) => {
+      fetch('http://jsonplaceholder.typicode.com/todos').then(
+        (response) => {
+          // преобразовать json-строку в js-объект
+          // и сделать возвращаемым значением промиса (оболочки асинхронной задачи)
+          return response.json()
+        }
+      ).then(
+        (response) => {
+          const resultDiv = document.getElementById('async-demo__result-block')
+          resultDiv.innerText = ''
+          response.forEach(todo => {
+            const todoDiv = document.createElement('div')
+            if (todo.comleted) {
+              todoDiv.style.backgroundColor = '#cfc'
+            } else {
+              todoDiv.style.backgroundColor = '#fcc'
+            }
+            const todoTitleH4 = document.createElement('h4')
+            todoTitleH4.innerText = todo.title
+            todoDiv.appendChild(todoTitleH4)
+            resultDiv.appendChild(todoDiv)
+          })
+        }
+      )
+    })
+  </script>
+</body>
+</html>
