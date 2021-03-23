@@ -9,6 +9,11 @@
     #async-demo__wait {
       display: none;
     }
+    #async-demo__result-block > div {
+      padding: 10px;
+      margin: 10px;
+      max-width: 25%;
+    }
   </style>
 </head>
 <body>
@@ -30,7 +35,8 @@
     const getTodosButton = document.getElementById('async-demo__get-todos-button')
     // установить обработчик события click на кнопку
     getTodosButton.addEventListener('click', (ev) => {
-      fetch('http://jsonplaceholder.typicode.com/todos').then(
+      // fetch('http://jsonplaceholder.typicode.com/todos').then(
+      fetch('http://localhost:4000/api/items').then(
         (response) => {
           // преобразовать json-строку в js-объект
           // и сделать возвращаемым значением промиса (оболочки асинхронной задачи)
@@ -38,7 +44,8 @@
         }
       ).then(
         (response) => {
-          const resultDiv = document.getElementById('async-demo__result-block')
+          console.log(response)
+          /* const resultDiv = document.getElementById('async-demo__result-block')
           resultDiv.innerText = ''
           response.forEach(todo => {
             const todoDiv = document.createElement('div')
@@ -51,6 +58,30 @@
             todoTitleH4.innerText = todo.title
             todoDiv.appendChild(todoTitleH4)
             resultDiv.appendChild(todoDiv)
+          }) */
+          const resultDiv = document.getElementById('async-demo__result-block')
+          resultDiv.innerText = ''
+          response.data.forEach(todo => {
+            const todoDiv = document.createElement('div')
+            if (todo.done) {
+              todoDiv.style.backgroundColor = '#cfc'
+            } else {
+              todoDiv.style.backgroundColor = '#fcc'
+            }
+            const todoTitleH4 = document.createElement('h4')
+            const todoDescriptionP = document.createElement(`p`)
+            const todoDateSpan = document.createElement(`span`)
+            const todoDone = document.createElement(`div`)
+            todoTitleH4.innerText = "Title: "+ todo.title
+            todoDescriptionP.innerText = "Description: "+ todo.description
+            todoDateSpan.innerText = "Date: "+ (new Date(todo.date)).toLocaleString('ru')
+            todoDone.innerText = "Done: "+ todo.done
+            todoDiv.appendChild(todoTitleH4)
+            todoDiv.appendChild(todoDescriptionP)
+            todoDiv.appendChild(todoDateSpan)
+            todoDiv.appendChild(todoDone)
+            resultDiv.appendChild(todoDiv)
+
           })
         }
       )
