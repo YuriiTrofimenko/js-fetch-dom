@@ -25,17 +25,39 @@
   </div>
   <h2>Async Demo</h2>
   <div>
-    <div id="async-demo__wait">Wait...</div>
+    <form id="async-demo__add-todo-form">
+      <div>
+        <input id="async-demo__add-todo-form__title-input" type="text" placeholder="title">
+      </div>
+      <div>
+        <textarea id="async-demo__add-todo-form__description-textarea" placeholder="description"></textarea>
+      </div>
+      <div>
+        <input type="submit" value="Submit">
+      </div>
+    </form>
     <button id="async-demo__get-todos-button">Get TODOs Async</button>
+    <span id="async-demo__wait">Wait...</span>
     <h3>Result:</h3>
     <div id="async-demo__result-block"></div>
   </div>
   <script>
+    function toggleWait (show) {
+      const waitDiv = document.getElementById('async-demo__wait')
+      if (show) {
+        waitDiv.style.display = 'inline'
+      } else {
+        waitDiv.style.display = 'none'
+      }
+    }
     // получить ссылку на объект узла кноки в DOM
     const getTodosButton = document.getElementById('async-demo__get-todos-button')
     // установить обработчик события click на кнопку
     getTodosButton.addEventListener('click', (ev) => {
       // fetch('http://jsonplaceholder.typicode.com/todos').then(
+      // TODO вынести ниже приведенный код в отдельную функцию,
+      // а здесь ее вызвать
+      toggleWait(true)
       fetch('http://localhost:4000/api/items').then(
         (response) => {
           // преобразовать json-строку в js-объект
@@ -84,7 +106,33 @@
 
           })
         }
-      )
+      ).catch(reason => alert(reason))
+      .finally(() => toggleWait(false))
+    })
+
+    const addTodoForm = document.getElementById('async-demo__add-todo-form')
+    addTodoForm.addEventListener('submit', (ev) => {
+      ev.preventDefault()
+      toggleWait(true)
+      fetch('http://localhost:4000/api/items', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          'title': document.getElementById('async-demo__add-todo-form__title-input').value,
+          'description': document.getElementById('async-demo__add-todo-form__description-textarea').value,
+          'date': new Date()
+        })
+      }).then(response => {
+        return response.json()
+      }).then(responseBody => {
+        alert(responseBody.message)
+        // TODO здесь тоже вызвать функцию получения и вывода на страницу
+        // всех задачек
+      }).catch(reason => alert(reason))
+      .finally(() => toggleWait(false))
     })
   </script>
 </body>
