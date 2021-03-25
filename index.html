@@ -59,13 +59,8 @@
         waitDiv.style.display = 'none'
       }
     }
-    // получить ссылку на объект узла кноки в DOM
-    const getTodosButton = document.getElementById('async-demo__get-todos-button')
-    // установить обработчик события click на кнопку
-    getTodosButton.addEventListener('click', (ev) => {
-      // fetch('http://jsonplaceholder.typicode.com/todos').then(
-      // TODO вынести ниже приведенный код в отдельную функцию,
-      // а здесь ее вызвать
+
+    function fetchItems () {
       toggleWait(true)
       fetch('http://localhost:4000/api/items').then(
         (response) => {
@@ -75,21 +70,6 @@
         }
       ).then(
         (response) => {
-          console.log(response)
-          /* const resultDiv = document.getElementById('async-demo__result-block')
-          resultDiv.innerText = ''
-          response.forEach(todo => {
-            const todoDiv = document.createElement('div')
-            if (todo.comleted) {
-              todoDiv.style.backgroundColor = '#cfc'
-            } else {
-              todoDiv.style.backgroundColor = '#fcc'
-            }
-            const todoTitleH4 = document.createElement('h4')
-            todoTitleH4.innerText = todo.title
-            todoDiv.appendChild(todoTitleH4)
-            resultDiv.appendChild(todoDiv)
-          }) */
           const resultDiv = document.getElementById('async-demo__result-block')
           resultDiv.innerText = ''
           response.data.forEach(todo => {
@@ -99,6 +79,14 @@
             } else {
               todoDiv.style.backgroundColor = '#fcc'
             }
+            // клик по карточке задачи означает начало редактирования
+            // этой задачи
+            todoDiv.addEventListener('click', (ev) => {
+              // копируем из текущей модели заголовок и описание в форму
+              document.getElementById('async-demo__add-todo-form__title-input').value = todo.title
+              document.getElementById('async-demo__add-todo-form__description-textarea').value = todo.description
+              window.selectedItemId = todo.id
+            })
             const todoTitleH4 = document.createElement('h4')
             const todoDescriptionP = document.createElement(`p`)
             const todoDateSpan = document.createElement(`span`)
@@ -107,8 +95,16 @@
             todoCloseButton.id = 'async-demo__item-div__close-button'
             todoCloseButton.innerText = 'X'
             todoCloseButton.addEventListener('click', (ev) => {
-              const result = confirm('ToDo Item Will be Deleted. Continue?')
-              console.log('delete', result)
+              if (confirm('ToDo Item Will be Deleted. Continue?')) {
+                fetch(`http://localhost:4000/api/items/${todo.id}`, {
+                  method: 'DELETE'
+                }).then(response => {
+                  if (response.status === 204) {
+                    // запросить список моделей пунктов заново
+                    fetchItems()
+                  }
+                })
+              }
               // TODO если result === true -
               // выполнить fetch с методом delete и шаблоном адреса:
               // http://localhost:4000/api/items/{id}
@@ -128,31 +124,66 @@
         }
       ).catch(reason => alert(reason))
       .finally(() => toggleWait(false))
+    }
+    // получить ссылку на объект узла кноки в DOM
+    const getTodosButton = document.getElementById('async-demo__get-todos-button')
+    // установить обработчик события click на кнопку
+    getTodosButton.addEventListener('click', (ev) => {
+      // fetch('http://jsonplaceholder.typicode.com/todos').then(
+      // TODO вынести ниже приведенный код в отдельную функцию,
+      // а здесь ее вызвать
+      fetchItems()
     })
 
     const addTodoForm = document.getElementById('async-demo__add-todo-form')
     addTodoForm.addEventListener('submit', (ev) => {
       ev.preventDefault()
-      toggleWait(true)
-      fetch('http://localhost:4000/api/items', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          'title': document.getElementById('async-demo__add-todo-form__title-input').value,
-          'description': document.getElementById('async-demo__add-todo-form__description-textarea').value,
-          'date': new Date()
-        })
-      }).then(response => {
-        return response.json()
-      }).then(responseBody => {
-        alert(responseBody.message)
-        // TODO здесь тоже вызвать функцию получения и вывода на страницу
-        // всех задачек
-      }).catch(reason => alert(reason))
-      .finally(() => toggleWait(false))
+      // если нет глобального значения ИД пункта для редактирования -
+      // - отправляем на сервер новый пункт (задачу)
+      if (!window.selectedItemId) {
+        toggleWait(true)
+        fetch('http://localhost:4000/api/items', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            'title': document.getElementById('async-demo__add-todo-form__title-input').value,
+            'description': document.getElementById('async-demo__add-todo-form__description-textarea').value,
+            'date': new Date()
+          })
+        }).then(response => {
+          return response.json()
+        }).then(responseBody => {
+          alert(responseBody.message)
+          fetchItems()
+        }).catch(reason => alert(reason))
+        .finally(() => toggleWait(false))
+      } else {
+        // если есть глобальное значение ИД пункта для редактирования -
+        // выполняем обновление на сервере
+        toggleWait(true)
+        fetch(`http://localhost:4000/api/items/${window.selectedItemId}`, {
+          method: 'PUT',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            'title': document.getElementById('async-demo__add-todo-form__title-input').value,
+            'description': document.getElementById('async-demo__add-todo-form__description-textarea').value,
+            'date': new Date(),
+            'done': false
+          })
+        }).then(response => {
+          if (response.status === 200) {
+            window.selectedItemId = null
+            fetchItems()
+          }
+        }).catch(reason => alert(reason))
+        .finally(() => toggleWait(false))
+      }
     })
   </script>
 </body>
